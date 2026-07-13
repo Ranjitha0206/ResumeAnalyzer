@@ -10,6 +10,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ITextChnukingService, TextChunkingService>();
 builder.Services.AddScoped<IResumeParserService, ResumeParserService>();
+builder.Services.AddScoped<IEmbeddingService, AIEmbeddingService>();
 
 var app = builder.Build();
 
