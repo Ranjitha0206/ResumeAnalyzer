@@ -14,11 +14,13 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IResumeService _resumeService;
         private readonly ITextChnukingService _ChunkingService;
         private readonly IResumeParserService _resumeParserService;
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService)
+        public readonly IEmbeddingService _embeddingService;
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
             _resumeParserService = resumeParserService;
+            _embeddingService = embeddingService;
         }
 
         [HttpGet]
@@ -27,6 +29,19 @@ namespace ResumeAnalyzer.API.Controllers
             return Ok(new
             {
                 Message = "Resume Analyzer API is running"
+            });
+        }
+
+        [HttpGet("test-embedding")]
+        public async Task<IActionResult> TestEmbedding()
+        {
+            var embedding = await _embeddingService.GenerateEmbeddingAsync(
+                "Experienced .NET Developer with ASP.NET Core and SQL");
+
+            return Ok(new
+            {
+                Count = embedding.Count,
+                Sample = embedding.Take(10)
             });
         }
 

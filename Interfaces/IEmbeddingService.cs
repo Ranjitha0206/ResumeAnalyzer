@@ -2,5 +2,5 @@
 
 public interface IEmbeddingService
 {
-    Task<float[]> GenerateEmbeddingAsync(string text);
+    Task<IReadOnlyList<double>> GenerateEmbeddingAsync(string text);
 }

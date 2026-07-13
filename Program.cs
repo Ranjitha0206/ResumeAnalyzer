@@ -1,5 +1,6 @@
 using ResumeAnalyzer.API.Services;
 using ResumeAnalyzer.API.Interfaces;
+using ResumeAnalyzer.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ITextChnukingService, TextChunkingService>();
 builder.Services.AddScoped<IResumeParserService, ResumeParserService>();
 builder.Services.AddScoped<IEmbeddingService, AIEmbeddingService>();
+
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
 
 var app = builder.Build();
 

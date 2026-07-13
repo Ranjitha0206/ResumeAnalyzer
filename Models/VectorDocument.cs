@@ -6,6 +6,6 @@
 
         public string SectionName { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
-        public float[] EMbedding { get; set; } = Array.Empty<float>();
+        public IReadOnlyList<double> Embedding { get; set; } = Array.Empty<double>();
     }
 }
