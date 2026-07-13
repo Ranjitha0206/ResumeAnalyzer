@@ -23,5 +23,21 @@ namespace ResumeAnalyzer.API.Services
             _documents.Clear();
             return Task.CompletedTask;
         }
+
+        public Task<List<VectorDocument>> SearchAsync(IReadOnlyList<double> queryEmbedding, int topK =3)
+        {
+            var results = _documents.Select(document => new
+            {
+                Document = document,
+                Score = CosineSimilarity.Calculate(queryEmbedding, document.Embedding)
+            })
+            .OrderByDescending(x=>x.Score)
+            .Take(topK)
+            .Select(x=>x.Document)
+            .ToList();
+
+
+            return Task.FromResult(results);
+        }
     }
 }

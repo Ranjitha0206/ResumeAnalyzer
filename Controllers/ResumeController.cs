@@ -69,6 +69,41 @@ namespace ResumeAnalyzer.API.Controllers
             });
         }
 
+        [HttpGet("test-search")]
+        public async Task<IActionResult> TestSearch()
+        {
+            await _vectorStore.ClearAsync();
+
+            await _vectorStore.AddAsync(
+                new VectorDocument
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    SectionName = "Skills",
+                    Content = "C#, ASP.NET Core",
+                    Embedding = await _embeddingService.GenerateEmbeddingAsync("C#, ASP.NET Core")
+                }
+            );
+
+            await _vectorStore.AddAsync(
+                new VectorDocument
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    SectionName = "Education",
+                    Content = "Bachelor Of Engineering",
+                    Embedding = await _embeddingService.GenerateEmbeddingAsync("Bachelor Of Engineering")
+                });
+
+           var questionEmbedding =  await _embeddingService.GenerateEmbeddingAsync("What are the skills of the candidate?");
+
+            var results = await _vectorStore.SearchAsync(questionEmbedding);
+
+            return Ok(results.Select(r => new
+            {
+                r.SectionName,
+                r.Content
+            }));
+        }
+
         [HttpPost("upload")]
         public async Task<IActionResult> UploadResume(IFormFile file)
         {
