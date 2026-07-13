@@ -12,6 +12,7 @@ builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ITextChnukingService, TextChunkingService>();
 builder.Services.AddScoped<IResumeParserService, ResumeParserService>();
 builder.Services.AddScoped<IEmbeddingService, AIEmbeddingService>();
+builder.Services.AddSingleton<IVectorStore, InMemoryVectorStore>();
 
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
 

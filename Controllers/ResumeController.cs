@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ResumeAnalyzer.API.Interfaces;
 using ResumeAnalyzer.API.Services;
+using ResumeAnalyzer.API.Models;
 using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -14,13 +15,15 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IResumeService _resumeService;
         private readonly ITextChnukingService _ChunkingService;
         private readonly IResumeParserService _resumeParserService;
-        public readonly IEmbeddingService _embeddingService;
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService)
+        private readonly IEmbeddingService _embeddingService;
+        private readonly IVectorStore _vectorStore;
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
             _resumeParserService = resumeParserService;
             _embeddingService = embeddingService;
+            _vectorStore = vectorStore;
         }
 
         [HttpGet]
@@ -42,6 +45,27 @@ namespace ResumeAnalyzer.API.Controllers
             {
                 Count = embedding.Count,
                 Sample = embedding.Take(10)
+            });
+        }
+
+        [HttpGet("test-store")]
+        public async Task<IActionResult> TestStore()
+        {
+            await _vectorStore.AddAsync(
+                new VectorDocument
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    SectionName = "Skills",
+                    Content = "C#, ASP.NET Core",
+                    Embedding = await _embeddingService.GenerateEmbeddingAsync("C#, ASP.NET Core")
+                }
+            );
+
+            var docs = await _vectorStore.GetAsync();
+            return Ok(new
+            {
+                Count = docs.Count,
+                FirstSection = docs.First().SectionName
             });
         }
 
