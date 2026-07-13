@@ -39,9 +39,7 @@ public class ResumeService : IResumeService
             foreach(var page in document.GetPages())
             {
                 //text.AppendLine(page.Text);
-                text.AppendLine("===== PAGE START =====");
                 text.AppendLine(page.Text);
-                text.AppendLine("===== PAGE END =====");
             }
         }
         return text.ToString();

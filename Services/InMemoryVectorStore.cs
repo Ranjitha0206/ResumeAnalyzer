@@ -36,7 +36,7 @@ namespace ResumeAnalyzer.API.Services
             .Select(x=>x.Document)
             .ToList();
 
-
+            Console.WriteLine($"Documents in search: {_documents.Count}");
             return Task.FromResult(results);
         }
     }

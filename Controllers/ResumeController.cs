@@ -17,13 +17,15 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IResumeParserService _resumeParserService;
         private readonly IEmbeddingService _embeddingService;
         private readonly IVectorStore _vectorStore;
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore)
+        private readonly IResumeIndexingService _resumeIndexingService;
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
             _resumeParserService = resumeParserService;
             _embeddingService = embeddingService;
             _vectorStore = vectorStore;
+            _resumeIndexingService = resumeIndexingService;
         }
 
         [HttpGet]
@@ -69,39 +71,36 @@ namespace ResumeAnalyzer.API.Controllers
             });
         }
 
-        [HttpGet("test-search")]
-        public async Task<IActionResult> TestSearch()
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string query)
         {
-            await _vectorStore.ClearAsync();
+            var embedding = await _embeddingService.GenerateEmbeddingAsync(query);
 
-            await _vectorStore.AddAsync(
-                new VectorDocument
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    SectionName = "Skills",
-                    Content = "C#, ASP.NET Core",
-                    Embedding = await _embeddingService.GenerateEmbeddingAsync("C#, ASP.NET Core")
-                }
-            );
-
-            await _vectorStore.AddAsync(
-                new VectorDocument
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    SectionName = "Education",
-                    Content = "Bachelor Of Engineering",
-                    Embedding = await _embeddingService.GenerateEmbeddingAsync("Bachelor Of Engineering")
-                });
-
-           var questionEmbedding =  await _embeddingService.GenerateEmbeddingAsync("What are the skills of the candidate?");
-
-            var results = await _vectorStore.SearchAsync(questionEmbedding);
+            var results = await _vectorStore.SearchAsync(embedding);
 
             return Ok(results.Select(r => new
             {
                 r.SectionName,
                 r.Content
             }));
+        }
+
+        [HttpGet("index-status")]
+        public async Task<IActionResult> IndexStatus()
+        {
+            var docs = await _vectorStore.GetAsync();
+
+            return Ok(new
+            {
+                Count = docs.Count,
+                Sections = docs.Select(d => new
+                {
+                    d.SectionName,
+                    Preview = d.Content.Length > 80
+                        ? d.Content[..80]
+                        : d.Content
+                })
+            });
         }
 
         [HttpPost("upload")]
@@ -119,8 +118,8 @@ namespace ResumeAnalyzer.API.Controllers
             //var chunks = _ChunkingService.ChunkText(extractedText);
             //var chunks = _ChunkingService.ChunkResume(extractedText);
             extractedText = NormalizeResumeText(extractedText);
-
-            var sections = _resumeParserService.ParseResume(extractedText);
+            await _resumeIndexingService.IndexResumeAsync(extractedText);
+            //var sections = _resumeParserService.ParseResume(extractedText);
             //return Ok(new
             //{
             //    Message = "File uploaded successfully",
@@ -129,13 +128,15 @@ namespace ResumeAnalyzer.API.Controllers
             //    Chunks = chunks
             //});
 
-            return Ok(
-                new
-                {
-                    extractedText = extractedText,
-                    sections = sections
-                }
-                );
+            //return Ok(
+            //    new
+            //    {
+            //        extractedText = extractedText,
+            //        sections = sections
+            //    }
+            //    );
+
+            return Ok("File uploaded and indexed successfully.");
         }
 
         private string NormalizeResumeText(string text)
