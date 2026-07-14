@@ -24,9 +24,9 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IChatService _chatService;
         private readonly IConfiguration _configuration;
         private readonly IResumeQueryService _resumeQueryService;
+        private readonly IResumeSummaryService _resumeSummaryService;
 
-
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService, IChatService chatService, IConfiguration configuration, IResumeQueryService resumeQueryService)
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService, IChatService chatService, IConfiguration configuration, IResumeQueryService resumeQueryService, IResumeSummaryService resumeSummaryService)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
@@ -37,6 +37,7 @@ namespace ResumeAnalyzer.API.Controllers
             _chatService = chatService;
             _configuration = configuration;
             _resumeQueryService = resumeQueryService;
+            _resumeSummaryService = resumeSummaryService;
         }
 
         [HttpGet]
@@ -223,9 +224,20 @@ namespace ResumeAnalyzer.API.Controllers
         public async Task<IActionResult> Ask(AskQuestionRequest request)
         {
             var answer = await _resumeQueryService.AskAsync(request.Question);
-            return Ok(new
+            return Ok(new AskQuestionResponse
             {
                 Answer = answer
+            });
+        }
+
+        [HttpPost("summary")]
+        public async Task<IActionResult> Summary()
+        {
+            var summary = await _resumeSummaryService.GenerateSummaryAsync();
+
+            return Ok(new
+            {
+                Summary = summary
             });
         }
     }

@@ -32,4 +32,13 @@ public class GeminiChatService : IChatService
 
         return response.Text;
     }
+
+    public async Task<string> GenerateAsync(string prompt)
+    {
+        var response = await _client.Models.GenerateContentAsync(
+            model: _settings.ChatModel,
+            contents: prompt);
+
+        return response.Text;
+    }
 }
