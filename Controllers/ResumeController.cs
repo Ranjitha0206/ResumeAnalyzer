@@ -25,8 +25,8 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IResumeQueryService _resumeQueryService;
         private readonly IResumeSummaryService _resumeSummaryService;
-
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService, IChatService chatService, IConfiguration configuration, IResumeQueryService resumeQueryService, IResumeSummaryService resumeSummaryService)
+        private readonly IResumeSkillsService _resumeSkillsService;
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService, IChatService chatService, IConfiguration configuration, IResumeQueryService resumeQueryService, IResumeSummaryService resumeSummaryService, IResumeSkillsService resumeSkillsService)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
@@ -38,6 +38,7 @@ namespace ResumeAnalyzer.API.Controllers
             _configuration = configuration;
             _resumeQueryService = resumeQueryService;
             _resumeSummaryService = resumeSummaryService;
+            _resumeSkillsService = resumeSkillsService;
         }
 
         [HttpGet]
@@ -239,6 +240,13 @@ namespace ResumeAnalyzer.API.Controllers
             {
                 Summary = summary
             });
+        }
+
+        [HttpPost("skills")]
+        public async Task<IActionResult> GetSkills()
+        {
+            var result = await _resumeSkillsService.GetSkillsAsync();
+            return Ok(result);
         }
     }
 }

@@ -17,6 +17,7 @@ builder.Services.AddScoped<IResumeIndexingService, ResumeIndexingService>();
 builder.Services.AddScoped<IChatService, GeminiChatService>();
 builder.Services.AddScoped<IResumeQueryService, ResumeQueryService>();
 builder.Services.AddScoped<IResumeSummaryService, ResumeSummaryService>();
+builder.Services.AddScoped<IResumeSkillsService, ResumeSkillsService>();
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
 
 var app = builder.Build();
