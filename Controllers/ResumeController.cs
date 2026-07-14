@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google.GenAI;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using ResumeAnalyzer.API.Interfaces;
-using ResumeAnalyzer.API.Services;
 using ResumeAnalyzer.API.Models;
+using ResumeAnalyzer.API.Services;
 using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -18,7 +21,12 @@ namespace ResumeAnalyzer.API.Controllers
         private readonly IEmbeddingService _embeddingService;
         private readonly IVectorStore _vectorStore;
         private readonly IResumeIndexingService _resumeIndexingService;
-        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService)
+        private readonly IChatService _chatService;
+        private readonly IConfiguration _configuration;
+        private readonly IResumeQueryService _resumeQueryService;
+
+
+        public ResumeController(IResumeService resumeService, ITextChnukingService chunkingService, IResumeParserService resumeParserService, IEmbeddingService embeddingService, IVectorStore vectorStore, IResumeIndexingService resumeIndexingService, IChatService chatService, IConfiguration configuration, IResumeQueryService resumeQueryService)
         {
             _resumeService = resumeService;
             _ChunkingService = chunkingService;
@@ -26,6 +34,9 @@ namespace ResumeAnalyzer.API.Controllers
             _embeddingService = embeddingService;
             _vectorStore = vectorStore;
             _resumeIndexingService = resumeIndexingService;
+            _chatService = chatService;
+            _configuration = configuration;
+            _resumeQueryService = resumeQueryService;
         }
 
         [HttpGet]
@@ -103,6 +114,26 @@ namespace ResumeAnalyzer.API.Controllers
             });
         }
 
+        [HttpPost("test-chat")]
+        public async Task<IActionResult> TestChat()
+        {
+            var context = new List<string>
+            {
+                "The candidate has 3 years of experience in ASP.NET Core.",
+                "The candidate has worked with C#, REST APIs, MySQL, JavaScript, AWS S3 and Git.",
+                "The candidate has experience building web applications."
+            };
+
+            var answer = await _chatService.AskAsync(
+                "What are the candidate's skills?",
+                context);
+
+            return Ok(new
+            {
+                Answer = answer
+            });
+        }
+
         [HttpPost("upload")]
         public async Task<IActionResult> UploadResume(IFormFile file)
         {
@@ -168,6 +199,34 @@ namespace ResumeAnalyzer.API.Controllers
 
             return text;
 
+        }
+
+        [HttpGet("models")]
+        public async Task<IActionResult> GetModels()
+        {
+            var client = new Client(apiKey: _configuration["Gemini:ApiKey"]);
+
+            var models = new List<string>();
+
+            var pager = await client.Models.ListAsync();
+
+            await foreach (var model in pager)
+            {
+                models.Add(model.Name);
+            }
+
+            return Ok(models);
+
+        }
+
+        [HttpPost("ask")]
+        public async Task<IActionResult> Ask(AskQuestionRequest request)
+        {
+            var answer = await _resumeQueryService.AskAsync(request.Question);
+            return Ok(new
+            {
+                Answer = answer
+            });
         }
     }
 }
